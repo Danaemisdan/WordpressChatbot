@@ -1,4 +1,4 @@
-import { google } from '@ai-sdk/google';
+import { createOpenAI } from '@ai-sdk/openai';
 import { streamText } from 'ai';
 
 // Allow streaming responses up to 30 seconds
@@ -20,8 +20,14 @@ export async function POST(req: Request) {
     try {
         const { messages } = await req.json();
 
+        const openrouter = createOpenAI({
+            baseURL: 'https://openrouter.ai/api/v1',
+            apiKey: process.env.OPENROUTER_API_KEY!,
+        });
+
         const result = await streamText({
-            model: google('gemini-2.0-flash-exp'),
+            // meta-llama/llama-3.2-3b-instruct is free, fast, and reliable on OpenRouter
+            model: openrouter('meta-llama/llama-3.2-3b-instruct:free') as any,
             messages,
             system: `${ADMISSION_INDIA_CONTEXT}
       
