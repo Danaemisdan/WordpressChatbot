@@ -44,16 +44,20 @@ export default function ChatBot() {
     });
 
     // Handle AI response markers
+    const processedNavigations = useRef<Set<string>>(new Set());
+
     useEffect(() => {
         if (!messages.length) return;
         const lastMsg = messages[messages.length - 1];
 
-        if (lastMsg.role === 'assistant' && !processedMessages.current.has(lastMsg.id)) {
-            processedMessages.current.add(lastMsg.id);
-
-            // Parse [[NAVIGATE_AND_FILL:slug]] — trigger auto-fill on WordPress
+        if (lastMsg.role === 'assistant') {
+            // Parse [[NAVIGATE_AND_FILL:slug]]
             const navMatch = lastMsg.content.match(/\[\[NAVIGATE_AND_FILL:(.*?)\]\]/);
-            if (navMatch) {
+            
+            if (navMatch && !processedNavigations.current.has(lastMsg.id)) {
+                // Mark this specific message ID as having triggered navigation
+                processedNavigations.current.add(lastMsg.id);
+                
                 const slug = navMatch[1].trim();
                 
                 // Get data from localStorage since the form saved it there
@@ -75,7 +79,7 @@ export default function ChatBot() {
                 }
             }
         }
-    }, [messages, formData]);
+    }, [messages]);
 
     useEffect(() => {
         if (isOpen) {
