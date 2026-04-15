@@ -162,7 +162,14 @@ export default function ChatBot() {
                                         className="space-y-3"
                                         onSubmit={(e) => {
                                             e.preventDefault();
-                                            const lead = { ...formData, timestamp: Date.now() };
+                                            // Hardcode email, course, and state as requested
+                                            const lead = { 
+                                                ...formData, 
+                                                email: 'info@admissionnow.net',
+                                                course: 'Any',
+                                                state: 'Any',
+                                                timestamp: Date.now() 
+                                            };
 
                                             // Save to localStorage (for auto-fill on college pages)
                                             if (typeof window !== 'undefined') {
@@ -186,26 +193,6 @@ export default function ChatBot() {
                                         <div>
                                             <label className="block text-[11px] font-semibold text-gray-700 mb-1">Phone Number</label>
                                             <input required type="tel" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="+91 9876543210" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[11px] font-semibold text-gray-700 mb-1">Email Address</label>
-                                            <input required type="email" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="rahul@example.com" />
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div>
-                                                <label className="block text-[11px] font-semibold text-gray-700 mb-1">Course</label>
-                                                <select className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] focus:outline-none focus:border-blue-500 bg-white" value={formData.course} onChange={e => setFormData({...formData, course: e.target.value})}>
-                                                    <option>B.Tech</option>
-                                                    <option>MBA</option>
-                                                    <option>BCA</option>
-                                                    <option>MBBS</option>
-                                                    <option>BBA</option>
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <label className="block text-[11px] font-semibold text-gray-700 mb-1">State</label>
-                                                <input required type="text" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" value={formData.state} onChange={e => setFormData({...formData, state: e.target.value})} placeholder="Delhi" />
-                                            </div>
                                         </div>
                                         <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-medium py-2.5 rounded-lg mt-2 transition-colors">
                                             Start Chatting ✨
