@@ -16,7 +16,14 @@ interface FormData {
 
 export default function ChatBot() {
     const [isOpen, setIsOpen] = useState(false);
-    const [formData, setFormData] = useState<FormData>({});
+    const [hasSubmittedForm, setHasSubmittedForm] = useState(false);
+    const [formData, setFormData] = useState<FormData>({
+        name: "",
+        phone: "",
+        email: "",
+        course: "B.Tech",
+        state: "Delhi",
+    });
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const processedMessages = useRef<Set<string>>(new Set());
 
@@ -44,26 +51,19 @@ export default function ChatBot() {
         if (lastMsg.role === 'assistant' && !processedMessages.current.has(lastMsg.id)) {
             processedMessages.current.add(lastMsg.id);
 
-            // 1. Parse [[FORMDATA:{...}]] — store student details
-            const formDataMatch = lastMsg.content.match(/\[\[FORMDATA:([\s\S]*?)\]\]/);
-            if (formDataMatch) {
-                try {
-                    const parsed = JSON.parse(formDataMatch[1]);
-                    setFormData(parsed);
-                    // Also save to localStorage so WordPress page can access it
-                    if (typeof window !== 'undefined') {
-                        localStorage.setItem('chatbot_student_data', JSON.stringify(parsed));
-                    }
-                } catch (e) {
-                    console.error('Failed to parse FORMDATA:', e);
-                }
-            }
-
-            // 2. Parse [[NAVIGATE_AND_FILL:slug]] — trigger auto-fill on WordPress
+            // Parse [[NAVIGATE_AND_FILL:slug]] — trigger auto-fill on WordPress
             const navMatch = lastMsg.content.match(/\[\[NAVIGATE_AND_FILL:(.*?)\]\]/);
             if (navMatch) {
                 const slug = navMatch[1].trim();
-                const dataToSend = formData;
+                
+                // Get data from localStorage since the form saved it there
+                let dataToSend = {};
+                if (typeof window !== 'undefined') {
+                    const saved = localStorage.getItem('chatbot_student_data');
+                    if (saved) {
+                        try { dataToSend = JSON.parse(saved); } catch (e) {}
+                    }
+                }
 
                 // Send postMessage to WordPress parent with form data + target college
                 if (typeof window !== 'undefined' && window.parent !== window) {
@@ -117,92 +117,146 @@ export default function ChatBot() {
                                     <X size={18} />
                                 </button>
                             </div>
-
-                            {/* Messages */}
-                            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-white">
-                                {messages.length === 0 && (
-                                    <div className="text-center mt-12">
-                                        <p className="text-sm text-gray-500 mb-2">👋 Hi! I'm here to help.</p>
-                                        <p className="text-xs text-gray-400">Ask me to take you to Medical or Engineering colleges.</p>
+                            {/* Body: Either Form or Chat */}
+                            {!hasSubmittedForm ? (
+                                <div className="flex-1 overflow-y-auto p-5 bg-white">
+                                    <div className="mb-5">
+                                        <h4 className="text-base font-bold text-gray-900">Welcome to Admission Now! 🎓</h4>
+                                        <p className="text-xs text-gray-500 mt-1">Please fill this quick form to chat with our AI Counselor.</p>
                                     </div>
-                                )}
-                                {messages.map((m) => {
-                                    // Strip all system markers from display
-                                    const displayContent = m.content
-                                        .replace(/\[\[FORMDATA:[\s\S]*?\]\]/g, '')
-                                        .replace(/\[\[NAVIGATE_AND_FILL:.*?\]\]/g, '')
-                                        .replace(/\[\[NAVIGATE:.*?\]\]/g, '')
-                                        .trim();
-
-                                    // Skip empty messages (if only navigation command)
-                                    if (!displayContent.trim()) return null;
-
-                                    return (
-                                        <motion.div
-                                            key={m.id}
-                                            initial={{ opacity: 0, y: 10 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
-                                        >
-                                            <div
-                                                className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm ${m.role === "user"
-                                                    ? "bg-blue-600 text-white rounded-br-sm"
-                                                    : "bg-white text-gray-800 border border-gray-100 rounded-bl-sm"
-                                                    }`}
-                                            >
-                                                {displayContent}
+                                    <form 
+                                        className="space-y-3"
+                                        onSubmit={(e) => {
+                                            e.preventDefault();
+                                            if (typeof window !== 'undefined') {
+                                                localStorage.setItem('chatbot_student_data', JSON.stringify({
+                                                    ...formData,
+                                                    timestamp: Date.now()
+                                                }));
+                                            }
+                                            setHasSubmittedForm(true);
+                                        }}
+                                    >
+                                        <div>
+                                            <label className="block text-[11px] font-semibold text-gray-700 mb-1">Full Name</label>
+                                            <input required type="text" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Rahul Sharma" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[11px] font-semibold text-gray-700 mb-1">Phone Number</label>
+                                            <input required type="tel" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="+91 9876543210" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[11px] font-semibold text-gray-700 mb-1">Email Address</label>
+                                            <input required type="email" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="rahul@example.com" />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="block text-[11px] font-semibold text-gray-700 mb-1">Course</label>
+                                                <select className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] focus:outline-none focus:border-blue-500 bg-white" value={formData.course} onChange={e => setFormData({...formData, course: e.target.value})}>
+                                                    <option>B.Tech</option>
+                                                    <option>MBA</option>
+                                                    <option>BCA</option>
+                                                    <option>MBBS</option>
+                                                    <option>BBA</option>
+                                                </select>
                                             </div>
-                                        </motion.div>
-                                    );
-                                })}
-                                {isLoading && (
-                                    <div className="flex justify-start">
-                                        <div className="bg-white px-4 py-3 rounded-2xl rounded-bl-sm border border-gray-100">
-                                            <div className="flex gap-1">
-                                                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                                                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                                                <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                                            <div>
+                                                <label className="block text-[11px] font-semibold text-gray-700 mb-1">State</label>
+                                                <input required type="text" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" value={formData.state} onChange={e => setFormData({...formData, state: e.target.value})} placeholder="Delhi" />
                                             </div>
                                         </div>
-                                    </div>
-                                )}
-                                {error && (
-                                    <div className="flex justify-center mt-2">
-                                        <span className="text-xs text-red-500 bg-red-50 px-2 py-1 rounded-full">
-                                            Unable to connect. Please try again.
-                                        </span>
-                                    </div>
-                                )}
-                                <div ref={messagesEndRef} />
-                            </div>
+                                        <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-medium py-2.5 rounded-lg mt-2 transition-colors">
+                                            Start Chatting ✨
+                                        </button>
+                                    </form>
+                                </div>
+                            ) : (
+                                <>
+                                    {/* Messages */}
+                                    <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-white">
+                                        {messages.length === 0 && (
+                                            <div className="text-center mt-12">
+                                                <p className="text-sm text-gray-500 mb-2">👋 Hi {formData.name?.split(' ')[0]}! I'm ready to help.</p>
+                                                <p className="text-xs text-gray-400">Ask me about colleges or tell me where you'd like to apply.</p>
+                                            </div>
+                                        )}
+                                        {messages.map((m) => {
+                                            // Strip all system markers from display
+                                            const displayContent = m.content
+                                                .replace(/\[\[NAVIGATE_AND_FILL:.*?\]\]/g, '')
+                                                .trim();
 
-                            {/* Input Area */}
-                            <div className="p-3 bg-white border-t border-gray-100">
-                                <form
-                                    onSubmit={(e) => {
-                                        e.preventDefault();
-                                        const input = e.currentTarget.elements.namedItem('message') as HTMLInputElement;
-                                        if (!input.value.trim()) return;
-                                        append({ role: 'user', content: input.value });
-                                        input.value = '';
-                                    }}
-                                    className="relative flex items-center"
-                                >
-                                    <input
-                                        name="message"
-                                        placeholder="Type a message..."
-                                        className="w-full bg-gray-50 text-gray-800 text-sm rounded-xl py-3 pl-4 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all placeholder:text-gray-400"
-                                        autoComplete="off"
-                                    />
-                                    <button
-                                        type="submit"
-                                        className="absolute right-2 p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                                        disabled={isLoading}
-                                    >
-                                        <Send size={16} />
-                                    </button>
-                                </form>
-                            </div>
+                                            // Skip empty messages (if only navigation command)
+                                            if (!displayContent.trim()) return null;
+
+                                            return (
+                                                <motion.div
+                                                    key={m.id}
+                                                    initial={{ opacity: 0, y: 10 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
+                                                >
+                                                    <div
+                                                        className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm leading-relaxed shadow-sm ${m.role === "user"
+                                                            ? "bg-blue-600 text-white rounded-br-sm"
+                                                            : "bg-white text-gray-800 border border-gray-100 rounded-bl-sm"
+                                                            }`}
+                                                    >
+                                                        {displayContent}
+                                                    </div>
+                                                </motion.div>
+                                            );
+                                        })}
+                                        {isLoading && (
+                                            <div className="flex justify-start">
+                                                <div className="bg-white px-4 py-3 rounded-2xl rounded-bl-sm border border-gray-100">
+                                                    <div className="flex gap-1">
+                                                        <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
+                                                        <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
+                                                        <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {error && (
+                                            <div className="flex justify-center mt-2">
+                                                <span className="text-xs text-red-500 bg-red-50 px-2 py-1 rounded-full">
+                                                    Unable to connect. Please try again.
+                                                </span>
+                                            </div>
+                                        )}
+                                        <div ref={messagesEndRef} />
+                                    </div>
+
+                                    {/* Input Area */}
+                                    <div className="p-3 bg-white border-t border-gray-100">
+                                        <form
+                                            onSubmit={(e) => {
+                                                e.preventDefault();
+                                                const input = e.currentTarget.elements.namedItem('message') as HTMLInputElement;
+                                                if (!input.value.trim()) return;
+                                                append({ role: 'user', content: input.value });
+                                                input.value = '';
+                                            }}
+                                            className="relative flex items-center"
+                                        >
+                                            <input
+                                                name="message"
+                                                placeholder="Type a message..."
+                                                className="w-full bg-gray-50 text-gray-800 text-sm rounded-xl py-3 pl-4 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all placeholder:text-gray-400"
+                                                autoComplete="off"
+                                            />
+                                            <button
+                                                type="submit"
+                                                className="absolute right-2 p-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                                disabled={isLoading}
+                                            >
+                                                <Send size={16} />
+                                            </button>
+                                        </form>
+                                    </div>
+                                </>
+                            )}
                         </motion.div>
                     )}
                 </AnimatePresence>
