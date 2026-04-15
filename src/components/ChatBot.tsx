@@ -48,9 +48,25 @@ export default function ChatBot() {
         'graphic-era'            : 'https://admissionnow.net/graphic-era/',
         'coer-university'        : 'https://admissionnow.net/coer-university/',
         'uttaranchal-university' : 'https://admissionnow.net/uttaranchal-university/',
-        'sandip-university'      : 'https://admissionnow.net/sandip-university/',
-        'noida-international'    : 'https://admissionnow.net/noida-international/',
+        'sandip-university'      : 'https://admissionnow.net/sandipuniversity/',
+        'noida-international'    : 'https://admissionnow.net/noida-international-university/',
     };
+
+    // On mount: if user already submitted the form before, skip straight to chat
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const existing = localStorage.getItem('chatbot_student_data');
+            if (existing) {
+                try {
+                    const parsed = JSON.parse(existing);
+                    if (parsed.name && parsed.phone) {
+                        setFormData(parsed);
+                        setHasSubmittedForm(true);
+                    }
+                } catch (e) {}
+            }
+        }
+    }, []);
 
     // Handle AI response markers
     const processedNavigations = useRef<Set<string>>(new Set());
@@ -147,12 +163,20 @@ export default function ChatBot() {
                                         className="space-y-3"
                                         onSubmit={(e) => {
                                             e.preventDefault();
+                                            const lead = { ...formData, timestamp: Date.now() };
+
+                                            // Save to localStorage (for auto-fill on college pages)
                                             if (typeof window !== 'undefined') {
-                                                localStorage.setItem('chatbot_student_data', JSON.stringify({
-                                                    ...formData,
-                                                    timestamp: Date.now()
-                                                }));
+                                                localStorage.setItem('chatbot_student_data', JSON.stringify(lead));
                                             }
+
+                                            // Save to backend DB (fire-and-forget)
+                                            fetch('/api/leads', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify(lead),
+                                            }).catch(err => console.error('Lead save failed:', err));
+
                                             setHasSubmittedForm(true);
                                         }}
                                     >
