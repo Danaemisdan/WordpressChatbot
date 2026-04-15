@@ -2,7 +2,7 @@
 
 import { useChat } from "@ai-sdk/react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Sparkles, Send } from "lucide-react";
+import { X, Sparkles, Send, MessageCircle } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { ColorOrb } from "@/components/ui/ai-input";
 
@@ -321,15 +321,9 @@ export default function ChatBot() {
                         <X size={24} className="text-gray-600" />
                     </div>
                 ) : (
-                    <ColorOrb
-                        dimension="60px"
-                        tones={{
-                            base: "oklch(60% 0.15 240)",    // Vibrant Blue base
-                            accent1: "oklch(70% 0.15 320)", // Pink/Purple
-                            accent2: "oklch(80% 0.15 180)", // Cyan
-                            accent3: "oklch(75% 0.15 280)"  // Violet
-                        }}
-                    />
+                    <div className="w-14 h-14 bg-blue-600 hover:bg-blue-700 transition-colors rounded-full shadow-xl flex items-center justify-center border border-blue-500">
+                        <MessageCircle size={24} className="text-white" />
+                    </div>
                 )}
             </motion.button>
         </div>
