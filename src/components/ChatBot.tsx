@@ -192,7 +192,14 @@ export default function ChatBot() {
                                         </div>
                                         <div>
                                             <label className="block text-[11px] font-semibold text-gray-700 mb-1">Phone Number (10 Digits)</label>
-                                            <input required type="tel" pattern="[0-9]{10}" minLength={10} maxLength={10} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10)})} placeholder="9876543210" />
+                                            <input required type="tel" pattern="[6-9][0-9]{9}" title="Please enter a valid 10-digit Indian phone number starting with 6, 7, 8, or 9" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" value={formData.phone} onChange={e => {
+                                                let val = e.target.value.replace(/\D/g, '');
+                                                // Prevent starting with 0-5
+                                                if (val.length > 0 && !/^[6-9]/.test(val)) {
+                                                    val = '';
+                                                }
+                                                setFormData({...formData, phone: val.slice(0, 10)});
+                                            }} placeholder="9876543210" />
                                         </div>
                                         <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-medium py-2.5 rounded-lg mt-2 transition-colors">
                                             Start Chatting ✨
