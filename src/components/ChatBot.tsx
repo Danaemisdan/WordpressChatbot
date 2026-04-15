@@ -5,10 +5,20 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Sparkles, Send } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { ColorOrb } from "@/components/ui/ai-input";
-import { useRouter } from "next/navigation";
+
+interface FormData {
+    name?: string;
+    phone?: string;
+    email?: string;
+    course?: string;
+    state?: string;
+}
 
 export default function ChatBot() {
     const [isOpen, setIsOpen] = useState(false);
+    const [formData, setFormData] = useState<FormData>({});
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const processedMessages = useRef<Set<string>>(new Set());
 
     // Notify WordPress parent to resize the iframe when chat opens/closes
     useEffect(() => {
@@ -19,33 +29,53 @@ export default function ChatBot() {
             );
         }
     }, [isOpen]);
-    const router = useRouter();
-    const messagesEndRef = useRef<HTMLDivElement>(null);
-    const processedMessages = useRef<Set<string>>(new Set());
 
     const { messages, append, isLoading, error } = useChat({
         onError: (err) => {
             console.error("Chat Error:", err);
-            // We could show a toast here, but the inline error message below is good.
         }
     });
 
-    // Handle Navigation Commands
+    // Handle AI response markers
     useEffect(() => {
         if (!messages.length) return;
         const lastMsg = messages[messages.length - 1];
 
         if (lastMsg.role === 'assistant' && !processedMessages.current.has(lastMsg.id)) {
-            // Regex to find [[NAVIGATE:/path]]
-            const match = lastMsg.content.match(/\[\[NAVIGATE:(.*?)\]\]/);
-            if (match) {
-                const path = match[1];
-                console.log("Auto-navigating to:", path);
-                router.push(path);
-                processedMessages.current.add(lastMsg.id);
+            processedMessages.current.add(lastMsg.id);
+
+            // 1. Parse [[FORMDATA:{...}]] — store student details
+            const formDataMatch = lastMsg.content.match(/\[\[FORMDATA:(\{.*?\})\]\]/s);
+            if (formDataMatch) {
+                try {
+                    const parsed = JSON.parse(formDataMatch[1]);
+                    setFormData(parsed);
+                    // Also save to localStorage so WordPress page can access it
+                    if (typeof window !== 'undefined') {
+                        localStorage.setItem('chatbot_student_data', JSON.stringify(parsed));
+                    }
+                } catch (e) {
+                    console.error('Failed to parse FORMDATA:', e);
+                }
+            }
+
+            // 2. Parse [[NAVIGATE_AND_FILL:slug]] — trigger auto-fill on WordPress
+            const navMatch = lastMsg.content.match(/\[\[NAVIGATE_AND_FILL:(.*?)\]\]/);
+            if (navMatch) {
+                const slug = navMatch[1].trim();
+                const dataToSend = formData;
+
+                // Send postMessage to WordPress parent with form data + target college
+                if (typeof window !== 'undefined' && window.parent !== window) {
+                    window.parent.postMessage({
+                        type: 'chatbot-navigate-fill',
+                        slug,
+                        formData: dataToSend,
+                    }, '*');
+                }
             }
         }
-    }, [messages, router]);
+    }, [messages, formData]);
 
     useEffect(() => {
         if (isOpen) {
@@ -97,8 +127,12 @@ export default function ChatBot() {
                                     </div>
                                 )}
                                 {messages.map((m) => {
-                                    // Clean content for display
-                                    const displayContent = m.content.replace(/\[\[NAVIGATE:(.*?)\]\]/g, '');
+                                    // Strip all system markers from display
+                                    const displayContent = m.content
+                                        .replace(/\[\[FORMDATA:.*?\]\]/gs, '')
+                                        .replace(/\[\[NAVIGATE_AND_FILL:.*?\]\]/g, '')
+                                        .replace(/\[\[NAVIGATE:.*?\]\]/g, '')
+                                        .trim();
 
                                     // Skip empty messages (if only navigation command)
                                     if (!displayContent.trim()) return null;

@@ -11,8 +11,6 @@ export const metadata: Metadata = {
   title: "Chat Widget",
 };
 
-// This layout REPLACES the root layout for /widget route only.
-// It removes bg-white and all margins so the iframe is fully transparent.
 export default function WidgetLayout({
   children,
 }: {
@@ -20,6 +18,18 @@ export default function WidgetLayout({
 }) {
   return (
     <html lang="en" style={{ background: "transparent" }}>
+      <head>
+        {/* Force transparency - overrides any global CSS that sets white background */}
+        <style>{`
+          html, body, #__next {
+            background: transparent !important;
+            background-color: transparent !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+          }
+        `}</style>
+      </head>
       <body
         className={`${inter.variable} antialiased`}
         style={{
