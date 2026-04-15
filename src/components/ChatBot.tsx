@@ -223,13 +223,16 @@ export default function ChatBot() {
                                             </div>
                                         )}
                                         {messages.map((m) => {
-                                            // Strip all system markers from display
-                                            const displayContent = m.content
-                                                .replace(/\[\[NAVIGATE_AND_FILL:.*?\]\]/g, '')
-                                                .trim();
+                                            // Cleanly strip anything from '[[' onwards so the user never sees raw tags streaming
+                                            let displayContent = m.content.split('[[')[0].trim();
 
-                                            // Skip empty messages (if only navigation command)
-                                            if (!displayContent.trim()) return null;
+                                            // If the AI forgot to write a pleasantry and only output the tag, provide a fallback message
+                                            if (!displayContent && m.content.includes('[[')) {
+                                                displayContent = "Redirecting you to the application form now... 🚀";
+                                            }
+
+                                            // Skip empty messages completely
+                                            if (!displayContent) return null;
 
                                             return (
                                                 <motion.div
