@@ -26,7 +26,7 @@ export async function POST(req: Request) {
         });
 
         const result = await streamText({
-            model: openai('stepfun/step-3.5-flash:free') as any,
+            model: openai('google/gemini-2.0-flash-exp:free') as any,
             messages,
             system: `${ADMISSION_INDIA_CONTEXT}
       

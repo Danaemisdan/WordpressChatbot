@@ -9,6 +9,16 @@ import { useRouter } from "next/navigation";
 
 export default function ChatBot() {
     const [isOpen, setIsOpen] = useState(false);
+
+    // Notify WordPress parent to resize the iframe when chat opens/closes
+    useEffect(() => {
+        if (typeof window !== 'undefined' && window.parent !== window) {
+            window.parent.postMessage(
+                { type: 'chatbot-widget', isOpen },
+                '*'
+            );
+        }
+    }, [isOpen]);
     const router = useRouter();
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const processedMessages = useRef<Set<string>>(new Set());
@@ -44,7 +54,7 @@ export default function ChatBot() {
     }, [messages, isOpen]);
 
     return (
-        <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-4 pointer-events-none">
+        <div className="fixed bottom-0 right-0 z-50 flex flex-col items-end gap-4 pointer-events-none" style={{ padding: '16px' }}>
             {/* Chat Window */}
             <div className="pointer-events-auto">
                 <AnimatePresence>
