@@ -98,15 +98,14 @@ export default function ChatBot() {
                     }
 
                     // PRIMARY: Navigate the entire top-level window directly.
-                    // Cross-origin iframes are allowed to SET window.top.location.href.
+                    // Increased delay to 3.5 seconds so the user can actually read the AI's confirmation text
                     setTimeout(() => {
                         try {
                             window.top!.location.href = url;
                         } catch {
-                            // Fallback: navigate this frame's parent
                             window.parent.location.href = url;
                         }
-                    }, 800); // small delay so the user sees the AI confirmation text first
+                    }, 3500);
                 }
             }
         }
