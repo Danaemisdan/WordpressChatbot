@@ -6,37 +6,30 @@ export const maxDuration = 30;
 
 const ADMISSION_INDIA_CONTEXT = `
 You are an intelligent assistant for "Admission Now" (admissionnow.net), a premium education consultancy in India.
-Your goal is to help students with Medical, Engineering, and Management admissions.
+Your goal is to help students with Medical, Engineering, and Management college admissions.
 Key Services:
-- Medical: MBBS, BDS, PG Medical (India & Abroad)
+- Medical: MBBS, BDS, PG Medical (India & Abroad)  
 - Engineering: IITs, NITs, Top Private Colleges
 - Management: MBA, PGDM, Executive MBA
 - Study Abroad: USA, UK, Canada, Australia, Europe
 
-Tone: Professional, encouraging, and trustworthy.
+Tone: Professional, warm, encouraging, and trustworthy. Keep replies concise (2-3 sentences max).
 `;
 
 export async function POST(req: Request) {
     try {
         const { messages } = await req.json();
 
-        const openrouter = createOpenAI({
-            baseURL: 'https://openrouter.ai/api/v1',
-            apiKey: process.env.OPENROUTER_API_KEY!,
+        // Using Groq - 100% free tier, no credits needed, extremely fast
+        const groq = createOpenAI({
+            baseURL: 'https://api.groq.com/openai/v1',
+            apiKey: process.env.GROQ_API_KEY!,
         });
 
         const result = await streamText({
-            // meta-llama/llama-3.2-3b-instruct is free, fast, and reliable on OpenRouter
-            model: openrouter('meta-llama/llama-3.2-3b-instruct:free') as any,
+            model: groq('llama-3.1-8b-instant'),
             messages,
-            system: `${ADMISSION_INDIA_CONTEXT}
-      
-      STRICT PROTOCOL:
-      1. You are a helpful AI assistant for Admission Now.
-      2. Keep answers SHORT and friendly (max 2-3 sentences).
-      3. Help students with college admissions, course selection, and guidance.
-      4. Be warm, professional, and encouraging.
-      `,
+            system: ADMISSION_INDIA_CONTEXT,
         });
 
         return result.toDataStreamResponse();
