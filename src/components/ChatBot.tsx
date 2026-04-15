@@ -43,6 +43,15 @@ export default function ChatBot() {
         }
     });
 
+    // College slug → full URL map (used for direct navigation)
+    const COLLEGE_URLS: Record<string, string> = {
+        'graphic-era'            : 'https://admissionnow.net/graphic-era/',
+        'coer-university'        : 'https://admissionnow.net/coer-university/',
+        'uttaranchal-university' : 'https://admissionnow.net/uttaranchal-university/',
+        'sandip-university'      : 'https://admissionnow.net/sandip-university/',
+        'noida-international'    : 'https://admissionnow.net/noida-international/',
+    };
+
     // Handle AI response markers
     const processedNavigations = useRef<Set<string>>(new Set());
 
@@ -51,31 +60,37 @@ export default function ChatBot() {
         const lastMsg = messages[messages.length - 1];
 
         if (lastMsg.role === 'assistant') {
-            // Parse [[NAVIGATE_AND_FILL:slug]]
             const navMatch = lastMsg.content.match(/\[\[NAVIGATE_AND_FILL:(.*?)\]\]/);
-            
-            if (navMatch && !processedNavigations.current.has(lastMsg.id)) {
-                // Mark this specific message ID as having triggered navigation
-                processedNavigations.current.add(lastMsg.id);
-                
-                const slug = navMatch[1].trim();
-                
-                // Get data from localStorage since the form saved it there
-                let dataToSend = {};
-                if (typeof window !== 'undefined') {
-                    const saved = localStorage.getItem('chatbot_student_data');
-                    if (saved) {
-                        try { dataToSend = JSON.parse(saved); } catch (e) {}
-                    }
-                }
 
-                // Send postMessage to WordPress parent with form data + target college
-                if (typeof window !== 'undefined' && window.parent !== window) {
-                    window.parent.postMessage({
-                        type: 'chatbot-navigate-fill',
-                        slug,
-                        formData: dataToSend,
-                    }, '*');
+            if (navMatch && !processedNavigations.current.has(lastMsg.id)) {
+                processedNavigations.current.add(lastMsg.id);
+
+                const slug = navMatch[1].trim();
+                const url = COLLEGE_URLS[slug];
+
+                if (url && typeof window !== 'undefined') {
+                    // Save student data to localStorage so the college page can auto-fill
+                    const saved = localStorage.getItem('chatbot_student_data');
+
+                    // Also notify parent via postMessage (belt-and-suspenders)
+                    if (window.parent !== window) {
+                        window.parent.postMessage({
+                            type: 'chatbot-navigate-fill',
+                            slug,
+                            formData: saved ? JSON.parse(saved) : {},
+                        }, '*');
+                    }
+
+                    // PRIMARY: Navigate the entire top-level window directly.
+                    // Cross-origin iframes are allowed to SET window.top.location.href.
+                    setTimeout(() => {
+                        try {
+                            window.top!.location.href = url;
+                        } catch {
+                            // Fallback: navigate this frame's parent
+                            window.parent.location.href = url;
+                        }
+                    }, 800); // small delay so the user sees the AI confirmation text first
                 }
             }
         }
