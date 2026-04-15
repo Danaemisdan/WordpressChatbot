@@ -45,7 +45,7 @@ export default function ChatBot() {
             processedMessages.current.add(lastMsg.id);
 
             // 1. Parse [[FORMDATA:{...}]] — store student details
-            const formDataMatch = lastMsg.content.match(/\[\[FORMDATA:(\{.*?\})\]\]/s);
+            const formDataMatch = lastMsg.content.match(/\[\[FORMDATA:([\s\S]*?)\]\]/);
             if (formDataMatch) {
                 try {
                     const parsed = JSON.parse(formDataMatch[1]);
@@ -129,7 +129,7 @@ export default function ChatBot() {
                                 {messages.map((m) => {
                                     // Strip all system markers from display
                                     const displayContent = m.content
-                                        .replace(/\[\[FORMDATA:.*?\]\]/gs, '')
+                                        .replace(/\[\[FORMDATA:[\s\S]*?\]\]/g, '')
                                         .replace(/\[\[NAVIGATE_AND_FILL:.*?\]\]/g, '')
                                         .replace(/\[\[NAVIGATE:.*?\]\]/g, '')
                                         .trim();
