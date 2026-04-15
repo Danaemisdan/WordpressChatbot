@@ -191,8 +191,8 @@ export default function ChatBot() {
                                             <input required type="text" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Rahul Sharma" />
                                         </div>
                                         <div>
-                                            <label className="block text-[11px] font-semibold text-gray-700 mb-1">Phone Number</label>
-                                            <input required type="tel" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="+91 9876543210" />
+                                            <label className="block text-[11px] font-semibold text-gray-700 mb-1">Phone Number (10 Digits)</label>
+                                            <input required type="tel" pattern="[0-9]{10}" minLength={10} maxLength={10} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10)})} placeholder="9876543210" />
                                         </div>
                                         <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-medium py-2.5 rounded-lg mt-2 transition-colors">
                                             Start Chatting ✨
