@@ -174,6 +174,13 @@ export default function ChatBot() {
                                             // Save to localStorage (for auto-fill on college pages)
                                             if (typeof window !== 'undefined') {
                                                 localStorage.setItem('chatbot_student_data', JSON.stringify(lead));
+                                                // Broadcast to parent page that form was submitted
+                                                if (window.parent !== window) {
+                                                    window.parent.postMessage({
+                                                        type: 'chatbot-form-submitted',
+                                                        formData: lead
+                                                    }, '*');
+                                                }
                                             }
 
                                             // Save to backend DB (fire-and-forget)
