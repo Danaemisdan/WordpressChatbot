@@ -23,7 +23,22 @@ export async function POST(req: Request) {
 
         const url = process.env.UPSTASH_REDIS_REST_URL;
         const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+        const wpWebhookUrl = process.env.WP_WEBHOOK_URL;
 
+        // 1. Send to WordPress Webhook if configured
+        if (wpWebhookUrl) {
+            try {
+                await fetch(wpWebhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(lead)
+                });
+            } catch (webhookError) {
+                console.error("WordPress Webhook Error:", webhookError);
+            }
+        }
+
+        // 2. Save to Upstash Redis if configured
         if (url && token) {
             // Push lead to a Redis list called "leads"
             const res = await fetch(`${url}/lpush/leads/${encodeURIComponent(JSON.stringify(lead))}`, {
@@ -32,9 +47,9 @@ export async function POST(req: Request) {
             if (!res.ok) {
                 console.error('Upstash write failed:', await res.text());
             }
-        } else {
-            // No Redis configured — just log it (you'll see it in Vercel runtime logs)
-            console.log('LEAD CAPTURED:', JSON.stringify(lead));
+        } else if (!wpWebhookUrl) {
+            // No Database configured at all — just log it
+            console.log('LEAD CAPTURED (Not saved anywhere):', JSON.stringify(lead));
         }
 
         return Response.json({ ok: true });
