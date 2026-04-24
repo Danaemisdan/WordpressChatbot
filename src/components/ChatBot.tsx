@@ -206,7 +206,7 @@ export default function ChatBot() {
                                                     val = '';
                                                 }
                                                 setFormData({...formData, phone: val.slice(0, 10)});
-                                            }} placeholder="9876543210" />
+                                            }} placeholder="XXXXXXXXXX" />
                                         </div>
                                         <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white text-[13px] font-medium py-2.5 rounded-lg mt-2 transition-colors">
                                             Start Chatting ✨
