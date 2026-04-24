@@ -28,10 +28,19 @@ export async function POST(req: Request) {
         // 1. Send to WordPress Webhook if configured
         if (wpWebhookUrl) {
             try {
+                // Format the lead so WP Webhooks "create_post" understands it automatically
+                const wpPayload = {
+                    action: 'create_post',
+                    post_title: `New Lead: ${name}`,
+                    post_content: `Name: ${name}\nPhone: ${phone}\nEmail: ${email}\nCourse: ${course}\nState: ${state}`,
+                    post_status: 'draft',
+                    post_type: 'post'
+                };
+                
                 await fetch(wpWebhookUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(lead)
+                    body: JSON.stringify(wpPayload)
                 });
             } catch (webhookError) {
                 console.error("WordPress Webhook Error:", webhookError);
