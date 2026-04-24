@@ -168,9 +168,14 @@ export default function ChatBot() {
                                                 return;
                                             }
 
-                                            // Hardcode email, course, and state as requested
+                                            // Add +91 prefix for strict WordPress form validation plugins
+                                            const formattedPhone = formData.phone?.startsWith('+') 
+                                                ? formData.phone 
+                                                : `+91${formData.phone}`;
+
                                             const lead = { 
-                                                ...formData, 
+                                                ...formData,
+                                                phone: formattedPhone,
                                                 email: 'info@admissionnow.net',
                                                 course: 'Any',
                                                 state: 'Any',
