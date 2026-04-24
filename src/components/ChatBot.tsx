@@ -162,6 +162,12 @@ export default function ChatBot() {
                                         className="space-y-3"
                                         onSubmit={(e) => {
                                             e.preventDefault();
+                                            
+                                            if (!formData.phone || formData.phone.length !== 10) {
+                                                alert("Please enter a valid 10-digit phone number.");
+                                                return;
+                                            }
+
                                             // Hardcode email, course, and state as requested
                                             const lead = { 
                                                 ...formData, 
@@ -199,7 +205,7 @@ export default function ChatBot() {
                                         </div>
                                         <div>
                                             <label className="block text-[11px] font-semibold text-gray-700 mb-1">Phone Number (10 Digits)</label>
-                                            <input required type="tel" pattern="[6-9][0-9]{9}" title="Please enter a valid 10-digit Indian phone number starting with 6, 7, 8, or 9" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" value={formData.phone} onChange={e => {
+                                            <input required type="tel" minLength={10} maxLength={10} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" value={formData.phone} onChange={e => {
                                                 let val = e.target.value.replace(/\D/g, '');
                                                 // Prevent starting with 0-5
                                                 if (val.length > 0 && !/^[6-9]/.test(val)) {
