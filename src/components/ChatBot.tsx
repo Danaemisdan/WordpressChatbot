@@ -207,6 +207,21 @@ export default function ChatBot() {
                                             <label className="block text-[11px] font-semibold text-gray-700 mb-1">Phone Number (10 Digits)</label>
                                             <input required type="tel" minLength={10} maxLength={10} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-[13px] focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500" value={formData.phone} onChange={e => {
                                                 let val = e.target.value.replace(/\D/g, '');
+                                                
+                                                // Handle mobile keyboard autofill that includes country code (e.g., +91 or 091 or 91)
+                                                if (val.length > 10) {
+                                                    if (val.startsWith('91') && val.length === 12) {
+                                                        val = val.slice(2); // Strip '91'
+                                                    } else if (val.startsWith('091') && val.length === 13) {
+                                                        val = val.slice(3); // Strip '091'
+                                                    } else if (val.startsWith('0') && val.length === 11) {
+                                                        val = val.slice(1); // Strip leading '0'
+                                                    } else {
+                                                        // Just grab the last 10 digits as a fallback
+                                                        val = val.slice(-10);
+                                                    }
+                                                }
+
                                                 // Prevent starting with 0-5
                                                 if (val.length > 0 && !/^[6-9]/.test(val)) {
                                                     val = '';
